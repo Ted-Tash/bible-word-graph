@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Word Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Bible Word Cloud</h1>
+    <p class="subtitle">Select a book to visualize its most prominent words</p>
+  </header>
+
+  <main>
+    <section id="book-list"></section>
+
+    <section id="cloud-view" class="hidden">
+      <div class="cloud-header">
+        <button id="back-btn" class="back-btn">&larr; Back to Books</button>
+        <h2 id="book-title"></h2>
+        <p id="word-count" class="word-count"></p>
+      </div>
+      <div id="cloud-wrapper"></div>
+      <div id="loading" class="hidden">
+        <div class="spinner"></div>
+        <p>Fetching text and generating word cloud...</p>
+      </div>
+      <div id="error" class="hidden">
+        <p id="error-message"></p>
+        <button id="retry-btn">Try Again</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
