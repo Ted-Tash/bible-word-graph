@@ -110,6 +110,32 @@ main {
   margin-top: 0.25rem;
 }
 
+.top5-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  background: #1a3a5c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.top5-btn:hover {
+  background: #2a5a8c;
+}
+
+.top5-btn.active {
+  background: #c4913a;
+}
+
+.top5-btn.active:hover {
+  background: #d4a14a;
+}
+
 #cloud-wrapper {
   background: white;
   border-radius: 12px;

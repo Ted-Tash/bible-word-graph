@@ -58,6 +58,9 @@ const COLORS = [
 
 let bibleData = null; // loaded once from bible.json
 let currentBook = null;
+let currentWords = []; // full word list for current book
+let currentTotalWords = 0;
+let showingTopFive = false;
 
 const bookListEl = document.getElementById('book-list');
 const cloudViewEl = document.getElementById('cloud-view');
@@ -72,6 +75,7 @@ async function init() {
   document.getElementById('retry-btn').addEventListener('click', () => {
     if (currentBook) selectBook(currentBook);
   });
+  document.getElementById('top5-btn').addEventListener('click', toggleTopFive);
 
   loadingEl.classList.remove('hidden');
   loadingEl.querySelector('p').textContent = 'Loading Bible text...';
@@ -135,9 +139,16 @@ function selectBook(bookName) {
   cloudWrapperEl.innerHTML = '';
   errorEl.classList.add('hidden');
 
+  showingTopFive = false;
+  const top5Btn = document.getElementById('top5-btn');
+  top5Btn.textContent = 'Show Top 5 Only';
+  top5Btn.classList.remove('active');
+
   try {
     const text = getBookText(bookName);
     const { words, totalWords } = processText(text);
+    currentWords = words;
+    currentTotalWords = totalWords;
     wordCountEl.textContent = `Showing top ${words.length} words from ${totalWords.toLocaleString()} total`;
     renderWordCloud(words);
   } catch (err) {
@@ -216,6 +227,26 @@ function renderWordCloud(words) {
       .text(d => d.text)
       .append('title')
       .text(d => `${d.text}: ${d.rawCount} occurrences`);
+  }
+}
+
+function toggleTopFive() {
+  showingTopFive = !showingTopFive;
+  const btn = document.getElementById('top5-btn');
+
+  if (showingTopFive) {
+    btn.textContent = 'Show All Words';
+    btn.classList.add('active');
+    const top5 = currentWords.slice(0, 5);
+    wordCountEl.textContent = `Showing top 5 words from ${currentTotalWords.toLocaleString()} total`;
+    cloudWrapperEl.innerHTML = '';
+    renderWordCloud(top5);
+  } else {
+    btn.textContent = 'Show Top 5 Only';
+    btn.classList.remove('active');
+    wordCountEl.textContent = `Showing top ${currentWords.length} words from ${currentTotalWords.toLocaleString()} total`;
+    cloudWrapperEl.innerHTML = '';
+    renderWordCloud(currentWords);
   }
 }
 
