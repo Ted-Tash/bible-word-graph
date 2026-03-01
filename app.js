@@ -56,11 +56,14 @@ const COLORS = [
   '#8b4513', '#4a3060', '#c45a2d', '#2a6b8b', '#5c6b1a'
 ];
 
+const DEITY_WORDS = new Set(['god', 'jesus', 'lord', 'christ']);
+
 let bibleData = null; // loaded once from bible.json
 let currentBook = null;
 let currentWords = []; // full word list for current book
 let currentTotalWords = 0;
 let showingTopFive = false;
+let excludingDeity = false;
 
 const bookListEl = document.getElementById('book-list');
 const cloudViewEl = document.getElementById('cloud-view');
@@ -76,6 +79,7 @@ async function init() {
     if (currentBook) selectBook(currentBook);
   });
   document.getElementById('top5-btn').addEventListener('click', toggleTopFive);
+  document.getElementById('exclude-deity-btn').addEventListener('click', toggleExcludeDeity);
 
   loadingEl.classList.remove('hidden');
   loadingEl.querySelector('p').textContent = 'Loading Bible text...';
@@ -140,9 +144,9 @@ function selectBook(bookName) {
   errorEl.classList.add('hidden');
 
   showingTopFive = false;
-  const top5Btn = document.getElementById('top5-btn');
-  top5Btn.textContent = 'Show Top 5 Only';
-  top5Btn.classList.remove('active');
+  excludingDeity = false;
+  document.getElementById('top5-btn').classList.remove('active');
+  document.getElementById('exclude-deity-btn').classList.remove('active');
 
   try {
     const text = getBookText(bookName);
@@ -230,24 +234,35 @@ function renderWordCloud(words) {
   }
 }
 
+function getFilteredWords() {
+  let words = currentWords;
+  if (excludingDeity) {
+    words = words.filter(w => !DEITY_WORDS.has(w.text));
+  }
+  if (showingTopFive) {
+    words = words.slice(0, 5);
+  }
+  return words;
+}
+
+function updateCloudDisplay() {
+  const words = getFilteredWords();
+  const label = showingTopFive ? `top 5` : `top ${words.length}`;
+  wordCountEl.textContent = `Showing ${label} words from ${currentTotalWords.toLocaleString()} total`;
+  cloudWrapperEl.innerHTML = '';
+  renderWordCloud(words);
+}
+
 function toggleTopFive() {
   showingTopFive = !showingTopFive;
-  const btn = document.getElementById('top5-btn');
+  document.getElementById('top5-btn').classList.toggle('active');
+  updateCloudDisplay();
+}
 
-  if (showingTopFive) {
-    btn.textContent = 'Show All Words';
-    btn.classList.add('active');
-    const top5 = currentWords.slice(0, 5);
-    wordCountEl.textContent = `Showing top 5 words from ${currentTotalWords.toLocaleString()} total`;
-    cloudWrapperEl.innerHTML = '';
-    renderWordCloud(top5);
-  } else {
-    btn.textContent = 'Show Top 5 Only';
-    btn.classList.remove('active');
-    wordCountEl.textContent = `Showing top ${currentWords.length} words from ${currentTotalWords.toLocaleString()} total`;
-    cloudWrapperEl.innerHTML = '';
-    renderWordCloud(currentWords);
-  }
+function toggleExcludeDeity() {
+  excludingDeity = !excludingDeity;
+  document.getElementById('exclude-deity-btn').classList.toggle('active');
+  updateCloudDisplay();
 }
 
 function showError(message) {

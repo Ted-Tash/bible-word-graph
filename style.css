@@ -110,8 +110,14 @@ main {
   margin-top: 0.25rem;
 }
 
-.top5-btn {
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
   margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
   padding: 0.5rem 1.25rem;
   background: #1a3a5c;
   color: white;
@@ -124,15 +130,15 @@ main {
   transition: all 0.2s ease;
 }
 
-.top5-btn:hover {
+.filter-btn:hover {
   background: #2a5a8c;
 }
 
-.top5-btn.active {
+.filter-btn.active {
   background: #c4913a;
 }
 
-.top5-btn.active:hover {
+.filter-btn.active:hover {
   background: #d4a14a;
 }
 
