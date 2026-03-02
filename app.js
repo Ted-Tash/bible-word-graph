@@ -58,87 +58,92 @@ const COLORS = [
 
 const DEITY_WORDS = new Set(['god', 'jesus', 'lord', 'christ']);
 
-let bibleData = null; // loaded once from bible.json
+let bibleData = null;
 let currentBook = null;
-let currentWords = []; // full word list for current book
+let currentBookEntry = null;
+let currentWords = [];
 let currentTotalWords = 0;
 let showingTopFive = false;
 let excludingDeity = false;
 
-const bookListEl = document.getElementById('book-list');
-const cloudViewEl = document.getElementById('cloud-view');
-const bookTitleEl = document.getElementById('book-title');
+const bookSelectEl = document.getElementById('book-select');
 const wordCountEl = document.getElementById('word-count');
 const cloudWrapperEl = document.getElementById('cloud-wrapper');
+const cloudPlaceholderEl = document.getElementById('cloud-placeholder');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
+const rangePickersEl = document.getElementById('range-pickers');
+const startChapterEl = document.getElementById('start-chapter');
+const startVerseEl = document.getElementById('start-verse');
+const endChapterEl = document.getElementById('end-chapter');
+const endVerseEl = document.getElementById('end-verse');
 
 async function init() {
-  document.getElementById('back-btn').addEventListener('click', showBookList);
   document.getElementById('retry-btn').addEventListener('click', () => {
     if (currentBook) selectBook(currentBook);
   });
   document.getElementById('top5-btn').addEventListener('click', toggleTopFive);
   document.getElementById('exclude-deity-btn').addEventListener('click', toggleExcludeDeity);
+  bookSelectEl.addEventListener('change', onBookSelected);
+  startChapterEl.addEventListener('change', onStartChapterChange);
+  startVerseEl.addEventListener('change', onStartVerseChange);
+  endChapterEl.addEventListener('change', onEndChapterChange);
+  endVerseEl.addEventListener('change', onEndVerseChange);
 
   loadingEl.classList.remove('hidden');
-  loadingEl.querySelector('p').textContent = 'Loading Bible text...';
 
   try {
     const response = await fetch('bible.json');
     bibleData = await response.json();
     loadingEl.classList.add('hidden');
-    renderBookList();
+    populateBookSelect();
   } catch (err) {
     loadingEl.classList.add('hidden');
     showError('Failed to load Bible data.');
   }
 }
 
-function renderBookList() {
-  bookListEl.innerHTML = '';
-
+function populateBookSelect() {
   for (const [testament, books] of Object.entries(TESTAMENTS)) {
-    const section = document.createElement('div');
-    section.className = 'testament-section';
-
-    const heading = document.createElement('h3');
-    heading.textContent = testament;
-    section.appendChild(heading);
-
-    const grid = document.createElement('div');
-    grid.className = 'books-grid';
-
+    const group = document.createElement('optgroup');
+    group.label = testament;
     for (const book of books) {
-      const card = document.createElement('div');
-      card.className = 'book-card';
-      card.textContent = book;
-      card.addEventListener('click', () => selectBook(book));
-      grid.appendChild(card);
+      const option = document.createElement('option');
+      option.value = book;
+      option.textContent = book;
+      group.appendChild(option);
     }
-
-    section.appendChild(grid);
-    bookListEl.appendChild(section);
+    bookSelectEl.appendChild(group);
   }
 }
 
-function showBookList() {
-  bookListEl.classList.remove('hidden');
-  cloudViewEl.classList.add('hidden');
-  currentBook = null;
+function onBookSelected() {
+  const bookName = bookSelectEl.value;
+  if (!bookName) return;
+  selectBook(bookName);
 }
 
-function getBookText(bookName) {
+function getBookText(bookName, startCh, startV, endCh, endV) {
   const entry = bibleData.find(b => b.name === bookName);
   if (!entry) throw new Error(`Book "${bookName}" not found in data.`);
-  return entry.chapters.flat().join(' ');
+
+  if (startCh === undefined) return entry.chapters.flat().join(' ');
+
+  const verses = [];
+  for (let ch = startCh; ch <= endCh; ch++) {
+    const chapter = entry.chapters[ch - 1];
+    const vStart = (ch === startCh) ? startV - 1 : 0;
+    const vEnd = (ch === endCh) ? endV : chapter.length;
+    for (let v = vStart; v < vEnd; v++) {
+      verses.push(chapter[v]);
+    }
+  }
+  return verses.join(' ');
 }
 
 function selectBook(bookName) {
   currentBook = bookName;
-  bookListEl.classList.add('hidden');
-  cloudViewEl.classList.remove('hidden');
-  bookTitleEl.textContent = bookName;
+  currentBookEntry = bibleData.find(b => b.name === bookName);
   wordCountEl.textContent = '';
   cloudWrapperEl.innerHTML = '';
   errorEl.classList.add('hidden');
@@ -148,13 +153,111 @@ function selectBook(bookName) {
   document.getElementById('top5-btn').classList.remove('active');
   document.getElementById('exclude-deity-btn').classList.remove('active');
 
+  populateRangePickers();
+  generateCloud();
+}
+
+function populateRangePickers() {
+  if (!currentBookEntry) return;
+
+  const chapters = currentBookEntry.chapters;
+  const numChapters = chapters.length;
+  const lastChapterVerses = chapters[numChapters - 1].length;
+
+  fillOptions(startChapterEl, 1, numChapters);
+  fillOptions(startVerseEl, 1, chapters[0].length);
+  fillOptions(endChapterEl, 1, numChapters);
+  fillOptions(endVerseEl, 1, lastChapterVerses);
+
+  startChapterEl.value = '1';
+  startVerseEl.value = '1';
+  endChapterEl.value = String(numChapters);
+  endVerseEl.value = String(lastChapterVerses);
+
+  rangePickersEl.classList.remove('hidden');
+}
+
+function fillOptions(selectEl, min, max) {
+  selectEl.innerHTML = '';
+  for (let i = min; i <= max; i++) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = String(i);
+    selectEl.appendChild(opt);
+  }
+}
+
+function getRangeValues() {
+  return {
+    startCh: parseInt(startChapterEl.value),
+    startV: parseInt(startVerseEl.value),
+    endCh: parseInt(endChapterEl.value),
+    endV: parseInt(endVerseEl.value)
+  };
+}
+
+function onStartChapterChange() {
+  const chapters = currentBookEntry.chapters;
+  const startCh = parseInt(startChapterEl.value);
+  const endCh = parseInt(endChapterEl.value);
+
+  fillOptions(startVerseEl, 1, chapters[startCh - 1].length);
+  startVerseEl.value = '1';
+
+  if (endCh < startCh) {
+    endChapterEl.value = String(startCh);
+    fillOptions(endVerseEl, 1, chapters[startCh - 1].length);
+    endVerseEl.value = String(chapters[startCh - 1].length);
+  }
+
+  validateEndVerse();
+  generateCloud();
+}
+
+function onEndChapterChange() {
+  const chapters = currentBookEntry.chapters;
+  const startCh = parseInt(startChapterEl.value);
+  let endCh = parseInt(endChapterEl.value);
+
+  if (endCh < startCh) {
+    endChapterEl.value = String(startCh);
+    endCh = startCh;
+  }
+
+  fillOptions(endVerseEl, 1, chapters[endCh - 1].length);
+  endVerseEl.value = String(chapters[endCh - 1].length);
+
+  validateEndVerse();
+  generateCloud();
+}
+
+function onStartVerseChange() {
+  validateEndVerse();
+  generateCloud();
+}
+
+function onEndVerseChange() {
+  validateEndVerse();
+  generateCloud();
+}
+
+function validateEndVerse() {
+  const { startCh, startV, endCh } = getRangeValues();
+  let endV = parseInt(endVerseEl.value);
+
+  if (startCh === endCh && endV < startV) {
+    endVerseEl.value = String(startV);
+  }
+}
+
+function generateCloud() {
   try {
-    const text = getBookText(bookName);
+    const { startCh, startV, endCh, endV } = getRangeValues();
+    const text = getBookText(currentBook, startCh, startV, endCh, endV);
     const { words, totalWords } = processText(text);
     currentWords = words;
     currentTotalWords = totalWords;
-    wordCountEl.textContent = `Showing top ${words.length} words from ${totalWords.toLocaleString()} total`;
-    renderWordCloud(words);
+    updateCloudDisplay();
   } catch (err) {
     showError(err.message);
   }
@@ -254,12 +357,14 @@ function updateCloudDisplay() {
 }
 
 function toggleTopFive() {
+  if (!currentBook) return;
   showingTopFive = !showingTopFive;
   document.getElementById('top5-btn').classList.toggle('active');
   updateCloudDisplay();
 }
 
 function toggleExcludeDeity() {
+  if (!currentBook) return;
   excludingDeity = !excludingDeity;
   document.getElementById('exclude-deity-btn').classList.toggle('active');
   updateCloudDisplay();

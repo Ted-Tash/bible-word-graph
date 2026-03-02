@@ -16,28 +16,45 @@
   </header>
 
   <main>
-    <section id="book-list"></section>
+    <div class="controls">
+      <div class="book-select-wrapper">
+        <select id="book-select">
+          <option value="">Choose a book...</option>
+        </select>
+      </div>
+      <div class="filter-buttons">
+        <button id="top5-btn" class="filter-btn">Top 5 Only</button>
+        <button id="exclude-deity-btn" class="filter-btn">Exclude God/Jesus/Lord/Christ</button>
+      </div>
+    </div>
 
-    <section id="cloud-view" class="hidden">
-      <div class="cloud-header">
-        <button id="back-btn" class="back-btn">&larr; Back to Books</button>
-        <h2 id="book-title"></h2>
-        <p id="word-count" class="word-count"></p>
-        <div class="filter-buttons">
-          <button id="top5-btn" class="filter-btn">Top 5 Only</button>
-          <button id="exclude-deity-btn" class="filter-btn">Exclude God/Jesus/Lord/Christ</button>
-        </div>
+    <div id="range-pickers" class="range-pickers hidden">
+      <div class="range-group">
+        <label>From</label>
+        <select id="start-chapter"></select>
+        <span class="range-colon">:</span>
+        <select id="start-verse"></select>
       </div>
-      <div id="cloud-wrapper"></div>
-      <div id="loading" class="hidden">
-        <div class="spinner"></div>
-        <p>Fetching text and generating word cloud...</p>
+      <div class="range-group">
+        <label>To</label>
+        <select id="end-chapter"></select>
+        <span class="range-colon">:</span>
+        <select id="end-verse"></select>
       </div>
-      <div id="error" class="hidden">
-        <p id="error-message"></p>
-        <button id="retry-btn">Try Again</button>
-      </div>
-    </section>
+    </div>
+
+    <p id="word-count" class="word-count"></p>
+    <div id="cloud-wrapper">
+      <p id="cloud-placeholder" class="cloud-placeholder">Select a book above to generate a word cloud</p>
+    </div>
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <p>Loading Bible text...</p>
+    </div>
+    <div id="error" class="hidden">
+      <p id="error-message"></p>
+      <button id="retry-btn">Try Again</button>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
